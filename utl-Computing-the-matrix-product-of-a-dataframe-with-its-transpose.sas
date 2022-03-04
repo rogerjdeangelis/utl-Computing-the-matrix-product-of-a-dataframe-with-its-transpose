@@ -1,3 +1,5 @@
+%let pgm=utl-computing-the-matrix-product-of-a-sas-dataset-and-its-transpose;
+
 Computing the matrix product of a dataframe with its transpose (dot product)
 
 Github
@@ -14,6 +16,10 @@ https://communities.sas.com/t5/SAS-Programming/Multiple-Frequency-Table/m-p/6324
 
 I think this can be done inside DS2 or inside FCMP.
 Perhaps you are better off learning IML or R?
+
+other repos
+
+https://github.com/rogerjdeangelis?tab=repositories&q=matrix&type=&language=&sort=
 
 *_                   _
 (_)_ __  _ __  _   _| |_
@@ -55,7 +61,7 @@ SD1.HAVE total obs=5
 
 ;
 
-Mutiply and sum the have times transpose of have
+Mutiply and sum the have datasets times transpose of have
 
 proc transpose data=sd1.have out=havXpo;
 var _all_;
@@ -114,15 +120,18 @@ Obs    V1    V2    V3    V4    V5
 
 ;
 
-%utl_submit_r64('
+%utl_rbegin;
+parcards4;
 library(haven);
 library(SASxport);
+library(dplyr);
 have<-as.matrix(read_sas("d:/sd1/have.sas7bdat"));
+have;
 want<-as.data.frame(have %*% t(have));
 want;
 write.xport(want,file="d:/xpt/want.xpt");
-');
-
+;;;;
+%utl_rend;
 
 libname xpt xport "d:/xpt/want.xpt";
 data want;
@@ -130,4 +139,53 @@ data want;
 run;quit;
 libname xpt clear;
 
+/*
+ _ __ ___   __ _  ___ _ __ ___  ___
+| `_ ` _ \ / _` |/ __| `__/ _ \/ __|
+| | | | | | (_| | (__| | | (_) \__ \
+|_| |_| |_|\__,_|\___|_|  \___/|___/
 
+*/
+%macro utl_rbegin;
+%utlfkil(c:/temp/r_pgm.r);
+%utlfkil(c:/temp/r_pgm.log);
+filename ft15f001 "c:/temp/r_pgm.r";
+%mend utl_rbegin;
+
+%macro utl_rend(returnvar=N);
+* EXECUTE THE R PROGRAM;
+options noxwait noxsync;
+filename rut pipe "D:\r412\R\R-4.1.2\bin\R.exe --vanilla --quiet --no-save < c:/temp/r_pgm.r 2> c:/temp/r_pgm.log";
+run;quit;
+  data _null_;
+    file print;
+    infile rut recfm=v lrecl=32756;
+    input;
+    put _infile_;
+    putlog _infile_;
+  run;
+  filename ft15f001 clear;
+  * use the clipboard to create macro variable;
+  %if %upcase(%substr(&returnVar.,1,1)) ne N %then %do;
+    filename clp clipbrd ;
+    data _null_;
+     length txt $200;
+     infile clp;
+     input;
+     putlog "macro variable &returnVar = " _infile_;
+     call symputx("&returnVar.",_infile_,"G");
+    run;quit;
+  %end;
+data _null_;
+  file print;
+  infile rut;
+  input;
+  put _infile_;
+  putlog _infile_;
+run;quit;
+data _null_;
+  infile "c:/temp/r_pgm.log";
+  input;
+  putlog _infile_;
+run;quit;
+%mend utl_rend;
