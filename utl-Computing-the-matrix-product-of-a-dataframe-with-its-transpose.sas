@@ -201,6 +201,57 @@ quit;
 /*                                                                                                                        */
 /**************************************************************************************************************************/
 
+/*
+ _ __ ___   __ _  ___ _ __ ___  ___
+| `_ ` _ \ / _` |/ __| `__/ _ \/ __|
+| | | | | | (_| | (__| | | (_) \__ \
+|_| |_| |_|\__,_|\___|_|  \___/|___/
+
+*/
+%macro utl_rbegin;
+%utlfkil(c:/temp/r_pgm.r);
+%utlfkil(c:/temp/r_pgm.log);
+filename ft15f001 "c:/temp/r_pgm.r";
+%mend utl_rbegin;
+
+%macro utl_rend(returnvar=N);
+* EXECUTE THE R PROGRAM;
+options noxwait noxsync;
+filename rut pipe "D:\r412\R\R-4.1.2\bin\R.exe --vanilla --quiet --no-save < c:/temp/r_pgm.r 2> c:/temp/r_pgm.log";
+run;quit;
+  data _null_;
+    file print;
+    infile rut recfm=v lrecl=32756;
+    input;
+    put _infile_;
+    putlog _infile_;
+  run;
+  filename ft15f001 clear;
+  * use the clipboard to create macro variable;
+  %if %upcase(%substr(&returnVar.,1,1)) ne N %then %do;
+    filename clp clipbrd ;
+    data _null_;
+     length txt $200;
+     infile clp;
+     input;
+     putlog "macro variable &returnVar = " _infile_;
+     call symputx("&returnVar.",_infile_,"G");
+    run;quit;
+  %end;
+data _null_;
+  file print;
+  infile rut;
+  input;
+  put _infile_;
+  putlog _infile_;
+run;quit;
+data _null_;
+  infile "c:/temp/r_pgm.log";
+  input;
+  putlog _infile_;
+run;quit;
+%mend utl_rend;
+
 /*              _
   ___ _ __   __| |
  / _ \ `_ \ / _` |
@@ -208,4 +259,3 @@ quit;
  \___|_| |_|\__,_|
 
 */
-
