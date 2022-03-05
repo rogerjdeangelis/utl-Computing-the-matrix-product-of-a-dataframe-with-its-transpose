@@ -1,10 +1,23 @@
 %let pgm=utl-computing-the-matrix-product-of-a-sas-dataset-and-its-transpose;
 
-Computing the matrix product of a dataframe with its transpose (dot product)
+StackOverflow: Computing the matrix product of a dataframe with its transpose (dot product)
+
+  Two Solutions
+      1. R
+      2. SAS IML
+         Bartosz Jablonski
+         yabwon@gmail.com
+         (note how similar the SAS and R  solutions are. If you know sas IML and SQL
+          ypu are well along to enhance SAS with drop downs to R and in the case of SQL
+          drop down to Python)
 
 Github
 https://tinyurl.com/wcywfbn
 https://github.com/rogerjdeangelis/utl-Computing-the-matrix-product-of-a-dataframe-with-its-transpose
+
+StackOverFlow
+https://tinyurl.com/yrrp4czd
+https://stackoverflow.com/questions/71331335/compute-matrix-multiplication-without-iml-sas
 
 This type of ptoblem is best done with a matrix language like IML or R
 
@@ -18,7 +31,6 @@ I think this can be done inside DS2 or inside FCMP.
 Perhaps you are better off learning IML or R?
 
 other repos
-
 https://github.com/rogerjdeangelis?tab=repositories&q=matrix&type=&language=&sort=
 
 *_                   _
@@ -117,9 +129,15 @@ Obs    V1    V2    V3    V4    V5
 / __|/ _ \| | | | | __| |/ _ \| '_ \
 \__ \ (_) | | |_| | |_| | (_) | | | |
 |___/\___/|_|\__,_|\__|_|\___/|_| |_|
+ ____
+|  _ \
+| |_) |
+|  _ <
+|_| \_\
+
+*/
 
 ;
-
 %utl_rbegin;
 parcards4;
 library(haven);
@@ -138,54 +156,56 @@ data want;
   set xpt.want;
 run;quit;
 libname xpt clear;
-
-/*
- _ __ ___   __ _  ___ _ __ ___  ___
-| `_ ` _ \ / _` |/ __| `__/ _ \/ __|
-| | | | | | (_| | (__| | | (_) \__ \
-|_| |_| |_|\__,_|\___|_|  \___/|___/
+/*           _
+(_)_ __ ___ | |
+| | `_ ` _ \| |
+| | | | | | | |
+|_|_| |_| |_|_|
 
 */
-%macro utl_rbegin;
-%utlfkil(c:/temp/r_pgm.r);
-%utlfkil(c:/temp/r_pgm.log);
-filename ft15f001 "c:/temp/r_pgm.r";
-%mend utl_rbegin;
 
-%macro utl_rend(returnvar=N);
-* EXECUTE THE R PROGRAM;
-options noxwait noxsync;
-filename rut pipe "D:\r412\R\R-4.1.2\bin\R.exe --vanilla --quiet --no-save < c:/temp/r_pgm.r 2> c:/temp/r_pgm.log";
-run;quit;
-  data _null_;
-    file print;
-    infile rut recfm=v lrecl=32756;
-    input;
-    put _infile_;
-    putlog _infile_;
-  run;
-  filename ft15f001 clear;
-  * use the clipboard to create macro variable;
-  %if %upcase(%substr(&returnVar.,1,1)) ne N %then %do;
-    filename clp clipbrd ;
-    data _null_;
-     length txt $200;
-     infile clp;
-     input;
-     putlog "macro variable &returnVar = " _infile_;
-     call symputx("&returnVar.",_infile_,"G");
-    run;quit;
-  %end;
-data _null_;
-  file print;
-  infile rut;
-  input;
-  put _infile_;
-  putlog _infile_;
-run;quit;
-data _null_;
-  infile "c:/temp/r_pgm.log";
-  input;
-  putlog _infile_;
-run;quit;
-%mend utl_rend;
+
+proc IML;
+a =
+{
+1     0     0     1,
+1     0     1     1,
+0     1     1     1,
+0     0     0     0,
+1     1     1     1
+};
+ print a;
+
+ r = a * a`;
+ print r;
+quit;
+
+
+/**************************************************************************************************************************/
+/*                                                                                                                        */
+/*              A                                                                                                         */
+/*                                                                                                                        */
+/*   1         0         0         1                                                                                      */
+/*   1         0         1         1                                                                                      */
+/*   0         1         1         1                                                                                      */
+/*   0         0         0         0                                                                                      */
+/*   1         1         1         1                                                                                      */
+/*                                                                                                                        */
+/*                   R                                                                                                    */
+/*                                                                                                                        */
+/*   2         2         1         0         2                                                                            */
+/*   2         3         2         0         3                                                                            */
+/*   1         2         3         0         3                                                                            */
+/*   0         0         0         0         0                                                                            */
+/*   2         3         3         0         4                                                                            */
+/*                                                                                                                        */
+/**************************************************************************************************************************/
+
+/*              _
+  ___ _ __   __| |
+ / _ \ `_ \ / _` |
+|  __/ | | | (_| |
+ \___|_| |_|\__,_|
+
+*/
+
